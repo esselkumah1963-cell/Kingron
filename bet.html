@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Essel Merit Prediction — 30-day rollover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#121A23;
+    --panel:#1A2632;
+    --panel-2:#20303E;
+    --line:#2C3F52;
+    --text:#E7EEF4;
+    --muted:#8FA3B5;
+    --gold:#E0A93B;
+    --gold-dim:#8A6A25;
+    --win:#2E9E63;
+    --win-bg:#16301F;
+    --loss:#C4483F;
+    --loss-bg:#33191A;
+    --radius:10px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:dark;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Archivo','Segoe UI',system-ui,-apple-system,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:0 18px 64px}
+
+  /* ---------- masthead ---------- */
+  header.top{
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#16212C,#121A23);
+    position:sticky;top:0;z-index:20;
+    padding-top:env(safe-area-inset-top,0px);
+  }
+  .top-in{max-width:1040px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .mark{
+    width:34px;height:34px;flex:none;border-radius:8px;
+    background:var(--gold);color:#12181F;
+    display:grid;place-items:center;font-weight:800;font-size:17px;
+  }
+  .brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .brand p{margin:0;font-size:12px;color:var(--muted)}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .save-state{font-size:11px;color:var(--muted)}
+
+  button{font-family:inherit}
+  .btn{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:8px 13px;font-size:13px;font-weight:500;cursor:pointer;
+  }
+  .btn:hover{border-color:var(--gold-dim)}
+  .btn:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .btn.armed{border-color:var(--loss);background:var(--loss-bg);color:#F2A29B}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#12181F;font-weight:600}
+  .btn.gold:hover{background:#EDB94A}
+  .btn[hidden]{display:none}
+  .banner .btn{margin-top:10px}
+
+  /* ---------- hero ---------- */
+  .hero{
+    margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--panel);overflow:hidden;
+  }
+  .hero-grid{display:grid;grid-template-columns:1.1fr 1fr}
+  .setup{padding:20px;border-right:1px solid var(--line)}
+  .setup h2{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--muted)}
+  .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input{
+    width:100%;background:#14202B;border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:9px 10px;font-size:15px;font-weight:600;font-family:inherit;
+  }
+  .note{margin:14px 0 0;font-size:12.5px;color:var(--muted);max-width:46ch}
+
+  .payout{padding:20px;display:flex;flex-direction:column;justify-content:center;background:
+    radial-gradient(120% 120% at 100% 0%, #24384A 0%, #1A2632 60%)}
+  .payout .cap{font-size:12.5px;color:var(--muted);margin:0}
+  .big{
+    margin:2px 0 0;font-size:clamp(34px,7vw,52px);line-height:1.02;font-weight:800;
+    letter-spacing:-.03em;color:var(--gold);
+  }
+  .sub{margin:8px 0 0;font-size:13px;color:var(--muted)}
+  .split{display:flex;gap:22px;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .split div span{display:block;font-size:11.5px;color:var(--muted)}
+  .split div strong{font-size:16px;font-weight:700}
+
+  /* ---------- live status ---------- */
+  .live{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:var(--radius);margin-top:14px;overflow:hidden;
+  }
+  .live div{background:var(--panel);padding:13px 15px}
+  .live span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:2px}
+  .live strong{font-size:18px;font-weight:700}
+
+  /* ---------- 30 day strip ---------- */
+  .strip-box{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:15px}
+  .strip-box h2{margin:0 0 11px;font-size:13px;font-weight:600;color:var(--muted)}
+  .strip{display:grid;grid-template-columns:repeat(15,1fr);gap:5px}
+  .pip{
+    aspect-ratio:1/1;border-radius:5px;background:#16222E;border:1px solid var(--line);
+    display:grid;place-items:center;font-size:10px;color:var(--muted);font-weight:600;
+  }
+  .pip.win{background:var(--win);border-color:var(--win);color:#08160E}
+  .pip.loss{background:var(--loss);border-color:var(--loss);color:#2A0B09}
+  .pip.void{opacity:.32}
+  .legend{display:flex;gap:16px;margin-top:11px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
+
+  .banner{
+    margin-top:14px;border-radius:var(--radius);padding:13px 15px;font-size:13.5px;
+    border:1px solid var(--loss);background:var(--loss-bg);
+  }
+  .banner.done{border-color:var(--win);background:var(--win-bg)}
+  .banner strong{font-weight:700}
+
+  /* ---------- table ---------- */
+  .ledger{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .ledger-head{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .ledger-head h2{margin:0;font-size:15px;font-weight:700}
+  .ledger-head p{margin:0;font-size:12.5px;color:var(--muted)}
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:680px}
+  th{
+    text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);
+    padding:10px 14px;border-bottom:1px solid var(--line);background:#182430;white-space:nowrap;
+  }
+  td{padding:9px 14px;border-bottom:1px solid #22313F;font-size:14px;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.day{color:var(--muted);font-weight:600;width:64px}
+  td.money{font-weight:600}
+  td.gain{color:var(--gold)}
+  tr.is-win td.day{color:var(--win)}
+  tr.is-win{background:rgba(46,158,99,.10)}
+  tr.is-loss{background:rgba(196,72,63,.13)}
+  tr.is-loss td.day{color:var(--loss)}
+  tr.is-void td{opacity:.34}
+  tr.is-next{box-shadow:inset 3px 0 0 var(--gold)}
+
+  .res-cell{display:flex;align-items:center;gap:6px}
+  .res-in{
+    width:78px;background:#14202B;border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:6px 8px;font-size:13px;font-family:inherit;font-weight:600;
+  }
+  .res-in::placeholder{color:#5C7186;font-weight:400}
+  .res-in.win{border-color:var(--win);background:var(--win-bg);color:#7FE0AA}
+  .res-in.loss{border-color:var(--loss);background:var(--loss-bg);color:#F2A29B}
+  .res-in.bad{border-color:var(--gold)}
+  .mini{
+    border:1px solid var(--line);background:#16222E;color:var(--muted);
+    border-radius:6px;width:26px;height:28px;font-size:12px;font-weight:700;cursor:pointer;
+  }
+  .mini.w:hover{border-color:var(--win);color:#7FE0AA}
+  .mini.l:hover{border-color:var(--loss);color:#F2A29B}
+
+  footer{margin-top:26px;font-size:12px;color:var(--muted);line-height:1.6;max-width:70ch}
+
+  @media (max-width:820px){
+    .hero-grid{grid-template-columns:1fr}
+    .setup{border-right:0;border-bottom:1px solid var(--line)}
+    .live{grid-template-columns:repeat(2,1fr)}
+    .strip{grid-template-columns:repeat(10,1fr)}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .pip{transition:background .18s ease,border-color .18s ease}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="mark">E</div>
+    <div class="brand">
+      <h1>Essel Merit Prediction</h1>
+      <p>30-day rollover tracker</p>
+    </div>
+    <div class="top-right">
+      <span class="save-state" id="saveState">Saving locally</span>
+      <button class="btn" id="downloadBtn" hidden>Download page</button>
+      <button class="btn" id="resetBtn">Start over</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="setup">
+        <h2>Your plan</h2>
+        <div class="fields">
+          <div class="field">
+            <label for="stake">Starting stake (₵)</label>
+            <input id="stake" type="number" min="1" step="1" value="50" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="odds">Odds each day</label>
+            <input id="odds" type="number" min="1.01" step="0.01" value="1.20" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="days">Days</label>
+            <input id="days" type="number" min="1" max="60" step="1" value="30" inputmode="numeric">
+          </div>
+        </div>
+        <p class="note">Every day the whole balance goes back on a single 1.20 selection. Win and it rolls over to tomorrow; one loss ends the run.</p>
+      </div>
+      <div class="payout">
+        <p class="cap">If all 30 days land</p>
+        <p class="big" id="finalBal">₵11,868.82</p>
+        <p class="sub" id="finalSub">From ₵50.00 — that is 237.4× your starting stake</p>
+        <div class="split">
+          <div><span>Total profit</span><strong id="totalProfit">₵11,818.82</strong></div>
+          <div><span>Halfway (day 15)</span><strong id="halfway">₵770.35</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="live">
+    <div><span>Balance now</span><strong id="liveBal">₵50.00</strong></div>
+    <div><span>Days won</span><strong id="liveWins">0 / 30</strong></div>
+    <div><span>Profit so far</span><strong id="liveProfit">₵0.00</strong></div>
+    <div><span>Next slip</span><strong id="liveNext">Day 1 · ₵50.00</strong></div>
+  </section>
+
+  <section class="strip-box">
+    <h2>Run at a glance</h2>
+    <div class="strip" id="strip"></div>
+    <div class="legend">
+      <span><i style="background:var(--win)"></i>Win</span>
+      <span><i style="background:var(--loss)"></i>Loss</span>
+      <span><i style="background:#16222E;border:1px solid var(--line)"></i>Not played yet</span>
+    </div>
+  </section>
+
+  <div id="banner"></div>
+
+  <section class="ledger">
+    <div class="ledger-head">
+      <h2>Daily ledger</h2>
+      <p>Type <b>win</b> or <b>1</b> for green, <b>loss</b> or <b>0</b> for red. Clear the box to undo.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Stake</th>
+            <th>Odds</th>
+            <th>Returns if it lands</th>
+            <th>Profit that day</th>
+            <th>Result</th>
+            <th>Balance after</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    A rollover puts your whole balance at risk every single day, so the run only pays if all 30 legs land — at 1.20 odds a bookmaker is pricing each pick at roughly an 80% chance, and 30 of those in a row works out near a 12% chance of surviving the full month. Track honestly and stake only what you can lose. 18+.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = "essel-rollover-v1";
+  var state = { stake:50, odds:1.2, days:30, results:{} };
+  var remote = null; // db doc handle if available
+
+  var $ = function(id){ return document.getElementById(id); };
+  var stakeEl=$("stake"), oddsEl=$("odds"), daysEl=$("days");
+
+  function money(n){
+    if(!isFinite(n)) n = 0;
+    return "₵" + n.toLocaleString("en-GH",{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  /* ---------- persistence: db if the viewer has it, otherwise localStorage ---------- */
+  function loadLocal(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){ var o = JSON.parse(raw); if(o && typeof o === "object") merge(o); }
+    }catch(e){}
+  }
+  function merge(o){
+    if(typeof o.stake === "number" && o.stake > 0) state.stake = o.stake;
+    if(typeof o.odds === "number" && o.odds > 1) state.odds = o.odds;
+    if(typeof o.days === "number" && o.days > 0) state.days = Math.min(60, Math.round(o.days));
+    if(o.results && typeof o.results === "object") state.results = o.results;
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    if(remote){ remote.set(JSON.parse(JSON.stringify(state))).catch(function(){}); }
+  }
+
+  loadLocal();
+
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("db").then(function(db){
+      if(!db) return;
+      remote = db.doc("rollover/state");
+      return remote.get().then(function(doc){
+        if(doc && doc.data){ merge(doc.data); render(); }
+        else { remote.set(JSON.parse(JSON.stringify(state))).catch(function(){}); }
+        $("saveState").textContent = "Saved to your account";
+      });
+    }).catch(function(){});
+  }
+
+  /* ---------- reading what the user types ---------- */
+  var WIN  = ["w","win","won","wins","1","y","yes","green","✓"];
+  var LOSS = ["l","loss","lose","lost","0","n","no","x","red"];
+  function parseResult(v){
+    var s = String(v||"").trim().toLowerCase();
+    if(s === "") return { val:null, ok:true };
+    if(WIN.indexOf(s) > -1)  return { val:"win",  ok:true };
+    if(LOSS.indexOf(s) > -1) return { val:"loss", ok:true };
+    return { val:null, ok:false };
+  }
+
+  /* ---------- the maths ---------- */
+  function compute(){
+    var s = state.stake, o = state.odds, d = state.days;
+    var rows = [], bal = s, dead = false, deadDay = null, wins = 0;
+    for(var i = 1; i <= d; i++){
+      var r = state.results[i] || null;
+      var stake = bal, ret = bal * o;
+      var row = { day:i, stake:stake, ret:ret, gain:ret - stake, result:r, dead:dead, after:bal };
+      if(!dead){
+        if(r === "win"){ bal = ret; wins++; }
+        else if(r === "loss"){ dead = true; deadDay = i; bal = 0; }
+        row.after = bal;
+      }
+      rows.push(row);
+    }
+    return {
+      rows:rows, balance:bal, dead:dead, deadDay:deadDay, wins:wins,
+      projected: s * Math.pow(o, d),
+      half: s * Math.pow(o, Math.ceil(d/2))
+    };
+  }
+
+  /* ---------- drawing ---------- */
+  function render(){
+    stakeEl.value = state.stake;
+    oddsEl.value = state.odds;
+    daysEl.value = state.days;
+
+    var m = compute();
+
+    $("finalBal").textContent = money(m.projected);
+    $("finalSub").textContent = "From " + money(state.stake) + " — that is " +
+      (m.projected/state.stake).toFixed(1) + "× your starting stake";
+    $("totalProfit").textContent = money(m.projected - state.stake);
+    document.querySelector(".payout .cap").textContent = "If all " + state.days + " days land";
+    $("halfway").parentNode.querySelector("span").textContent = "Halfway (day " + Math.ceil(state.days/2) + ")";
+    $("halfway").textContent = money(m.half);
+
+    $("liveBal").textContent = money(m.balance);
+    $("liveWins").textContent = m.wins + " / " + state.days;
+    $("liveProfit").textContent = money(m.balance - state.stake);
+
+    var next = null;
+    for(var i = 0; i < m.rows.length; i++){ if(!m.rows[i].dead && !m.rows[i].result){ next = m.rows[i]; break; } }
+    $("liveNext").textContent = m.dead ? "Run ended" :
+      (next ? "Day " + next.day + " · " + money(next.stake) : "All days played");
+
+    /* strip */
+    var strip = $("strip"); strip.innerHTML = "";
+    m.rows.forEach(function(r){
+      var p = document.createElement("div");
+      p.className = "pip" + (r.result ? " " + r.result : "") + (r.dead ? " void" : "");
+      p.textContent = r.day;
+      p.title = "Day " + r.day + " · stake " + money(r.stake);
+      strip.appendChild(p);
+    });
+
+    /* banner */
+    var b = $("banner"); b.innerHTML = "";
+    if(m.dead){
+      var lostOn = m.rows[m.deadDay-1];
+      b.innerHTML = '<div class="banner">Run ended on <strong>day ' + m.deadDay +
+        '</strong>. You carried ' + money(lostOn.stake) + ' into that slip and it went down. ' +
+        'Days ' + (m.deadDay+1) + '–' + state.days + ' are only a projection now.<br>' +
+        '<button class="btn gold" data-restart>Start a new run from day 1</button></div>';
+    } else if(m.wins === state.days && state.days > 0){
+      b.innerHTML = '<div class="banner done">All ' + state.days + ' days landed. Closing balance <strong>' +
+        money(m.balance) + '</strong>.<br>' +
+        '<button class="btn gold" data-restart>Start a new run from day 1</button></div>';
+    }
+    var rs = b.querySelector("[data-restart]");
+    if(rs) rs.addEventListener("click", function(){ clearRun(); });
+
+    /* table */
+    var body = $("rows"); body.innerHTML = "";
+    m.rows.forEach(function(r){
+      var tr = document.createElement("tr");
+      tr.className = r.dead ? "is-void" : (r.result ? "is-" + r.result : (next && next.day === r.day ? "is-next" : ""));
+      tr.innerHTML =
+        '<td class="day">' + r.day + '</td>' +
+        '<td class="money">' + money(r.stake) + '</td>' +
+        '<td>' + state.odds.toFixed(2) + '</td>' +
+        '<td class="money">' + money(r.ret) + '</td>' +
+        '<td class="gain">+' + money(r.gain).slice(1) + '</td>' +
+        '<td></td>' +
+        '<td class="money">' + (r.result === "loss" ? money(0) : money(r.after)) + '</td>';
+
+      var cell = tr.children[5];
+      var box = document.createElement("div"); box.className = "res-cell";
+      var input = document.createElement("input");
+      input.className = "res-in" + (r.result ? " " + r.result : "");
+      input.setAttribute("aria-label", "Result for day " + r.day);
+      input.placeholder = "win / loss";
+      input.value = r.result ? (r.result === "win" ? "Win" : "Loss") : "";
+      input.dataset.day = r.day;
+      input.disabled = r.dead;
+      box.appendChild(input);
+
+      if(!r.dead){
+        ["w","l"].forEach(function(k){
+          var btn = document.createElement("button");
+          btn.className = "mini " + k;
+          btn.type = "button";
+          btn.textContent = k.toUpperCase();
+          btn.title = (k === "w" ? "Mark day " + r.day + " as a win" : "Mark day " + r.day + " as a loss");
+          btn.addEventListener("click", function(){ setDay(r.day, k === "w" ? "win" : "loss", true); });
+          box.appendChild(btn);
+        });
+      }
+      cell.appendChild(box);
+      body.appendChild(tr);
+    });
+  }
+
+  function setDay(day, val, focusNext){
+    if(val) state.results[day] = val; else delete state.results[day];
+    save();
+    render();
+    if(focusNext){
+      var nxt = document.querySelector('.res-in[data-day="' + (day+1) + '"]:not([disabled])');
+      if(nxt) nxt.focus();
+    }
+  }
+
+  /* typing in the result box */
+  document.getElementById("rows").addEventListener("input", function(e){
+    var el = e.target;
+    if(!el.classList || !el.classList.contains("res-in")) return;
+    var day = parseInt(el.dataset.day, 10);
+    var p = parseResult(el.value);
+    if(!p.ok){ el.classList.add("bad"); return; }
+    el.classList.remove("bad");
+    if(p.val){ setDay(day, p.val, true); }
+    else if(state.results[day]){ setDay(day, null, false); }
+  });
+  document.getElementById("rows").addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    var el = e.target;
+    if(!el.classList || !el.classList.contains("res-in")) return;
+    e.preventDefault();
+    var day = parseInt(el.dataset.day, 10);
+    var nxt = document.querySelector('.res-in[data-day="' + (day+1) + '"]:not([disabled])');
+    if(nxt) nxt.focus();
+  });
+
+  /* plan inputs */
+  function readPlan(){
+    var s = parseFloat(stakeEl.value), o = parseFloat(oddsEl.value), d = parseInt(daysEl.value, 10);
+    state.stake = (isFinite(s) && s > 0) ? s : 50;
+    state.odds  = (isFinite(o) && o > 1) ? o : 1.2;
+    state.days  = (isFinite(d) && d > 0) ? Math.min(60, d) : 30;
+    Object.keys(state.results).forEach(function(k){ if(+k > state.days) delete state.results[k]; });
+    save(); render();
+  }
+  [stakeEl, oddsEl, daysEl].forEach(function(el){ el.addEventListener("change", readPlan); });
+
+  /* clear every win and loss, keep the plan */
+  function clearRun(){
+    state.results = {};
+    save(); render();
+    var t = document.querySelector('.res-in:not([disabled])');
+    if(t) t.focus();
+  }
+
+  var resetBtn = $("resetBtn"), armed = false, armTimer = null;
+  resetBtn.addEventListener("click", function(){
+    if(!armed){
+      armed = true;
+      resetBtn.classList.add("armed");
+      resetBtn.textContent = "Tap again to wipe";
+      armTimer = setTimeout(disarm, 4000);
+      return;
+    }
+    disarm();
+    clearRun();
+  });
+  function disarm(){
+    armed = false;
+    clearTimeout(armTimer);
+    resetBtn.classList.remove("armed");
+    resetBtn.textContent = "Start over";
+  }
+
+  /* save a copy of the page to the device */
+  var dlBtn = $("downloadBtn");
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("downloads").then(function(downloads){
+      if(!downloads) return;
+      dlBtn.hidden = false;
+      dlBtn.addEventListener("click", function(){
+        var html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        dlBtn.textContent = "Saving…";
+        downloads.save({ filename:"essel-merit-prediction.html", data:html })
+          .then(function(){ dlBtn.textContent = "Saved"; })
+          .catch(function(){ dlBtn.textContent = "Not saved"; })
+          .then(function(){ setTimeout(function(){ dlBtn.textContent = "Download page"; }, 2200); });
+      });
+    }).catch(function(){});
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
